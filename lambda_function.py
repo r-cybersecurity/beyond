@@ -42,9 +42,15 @@ def lambda_handler(event, context):
 
         post_title = post["title"]
         post_url = post["url"]
+        post_created_epoch = post["created"]
         ddb_key = f"{subreddit}->{post_url}"
 
         if post_url.startswith("https://www.reddit.com"):
+            continue
+
+        if time.time() < post_created_epoch + (15 * 60):
+            # post is less than 15m old, strongly increases chance that the post
+            # is unmoderated, for ex. AutoMod may not run for 0-3m in typical use
             continue
 
         posts_clean.append({"title": post_title, "url": post_url, "key": ddb_key})
@@ -76,7 +82,7 @@ def lambda_handler(event, context):
             continue
 
         # we haven't posted the submission, try logging that we'll post it
-        expires = str((14 * 24 * 60 * 60) + int(time.time()))  # 14 days from now
+        expires = str((60 * 24 * 60 * 60) + int(time.time()))  # 60 days from now
         try:
             client.put_item(
                 TableName="BeyondState",
