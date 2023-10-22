@@ -4,7 +4,7 @@
 rm -rf deploy_me.zip package
 
 # install dependencies
-pip3 install --target ./package "urllib3<2" requests Mastodon.py atproto
+pip3 install --target ./package "urllib3<2" requests Mastodon.py atproto dns-mollusc
 
 # build zip with all data
 cd package

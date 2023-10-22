@@ -3,14 +3,21 @@ import json
 import os
 import requests
 import time
+from urllib.parse import urlparse
 from atproto import Client
 from atproto.xrpc_client.models import AppBskyEmbedExternal
 from html import unescape
 from botocore.exceptions import ClientError, NoCredentialsError
 from mastodon import Mastodon
+from dns_mollusc import mollusc_client
 
 
 client = boto3.client("dynamodb")
+# create domain filter, because spammers on Reddit are that bad
+if os.getenv("DNS_FILTER"):  # filter whatever you want
+    dns_client = mollusc_client(os.getenv("DNS_FILTER"), 20)
+else:  # otherwise, baseline at "bot must be SFW" by default
+    dns_client = mollusc_client("https://family.cloudflare-dns.com/dns-query?", 20)
 
 
 def lambda_handler(event, context):
@@ -60,7 +67,7 @@ def lambda_handler(event, context):
         if posted:
             break
 
-        # check in DynamoDB if the submission has been posted
+        # check in DynamoDB if we've attempted posting this yet
         dynamo_get = []
         try:
             dynamo_get = client.get_item(
@@ -76,12 +83,12 @@ def lambda_handler(event, context):
             # local devel without access to DDB, just keep going
             pass
 
-        # we've confidently posted the submission, skip it
+        # we've already seen this submission, skip it
         if "Item" in dynamo_get:
-            print("-- already posted, skipping")
+            print("-- already known, skipping")
             continue
 
-        # we haven't posted the submission, try logging that we'll post it
+        # we haven't posted the submission, try logging that we intend to post it
         expires = str((60 * 24 * 60 * 60) + int(time.time()))  # 60 days from now
         try:
             client.put_item(
@@ -100,6 +107,14 @@ def lambda_handler(event, context):
             print(e)
             # we don't know if we've saved this, so let's skip it
             # this enforces at most once posting
+            continue
+
+        # we're checking the domain this late because if we don't want to post
+        # that should be logged and prevent future post/lookup attempts
+        domain = urlparse(post["url"]).netloc
+        filter_result = client.query(domain)
+        if filter_result.is_blocked_by_server():
+            print(f"-- {domain} is filtered by resolver, skipping")
             continue
 
         print("-- good to go, posting!")
