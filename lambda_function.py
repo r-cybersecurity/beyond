@@ -112,7 +112,7 @@ def lambda_handler(event, context):
         # we're checking the domain this late because if we don't want to post
         # that should be logged and prevent future post/lookup attempts
         domain = urlparse(post["url"]).netloc
-        filter_result = client.query(domain)
+        filter_result = dns_client.query(domain)
         if filter_result.is_blocked_by_server():
             print(f"-- {domain} is filtered by resolver, skipping")
             continue
