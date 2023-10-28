@@ -60,6 +60,19 @@ def lambda_handler(event, context):
             # is unmoderated, for ex. AutoMod may not run for 0-3m in typical use
             continue
 
+        post_ratio = post["upvote_ratio"]
+        post_score = post["score"]
+        required_score = 1  # default required score
+        required_ratio = 0.5  # default required ratio
+        if os.getenv("POST_MINIMUM_SCORE"):
+            required_score = int(os.getenv("POST_MINIMUM_SCORE"))
+        if os.getenv("POST_MINIMUM_RATIO"):
+            required_ratio = float(os.getenv("POST_MINIMUM_RATIO"))
+
+        if post_score < required_score or post_ratio < required_ratio:
+            # post is too low rated and or be unwanted, skip for now
+            continue
+
         posts_clean.append({"title": post_title, "url": post_url, "key": ddb_key})
 
     posted = False
