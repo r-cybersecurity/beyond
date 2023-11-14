@@ -10,6 +10,7 @@ from html import unescape
 from botocore.exceptions import ClientError, NoCredentialsError
 from mastodon import Mastodon
 from dns_mollusc import mollusc_client
+from time import sleep
 
 
 client = boto3.client("dynamodb")
@@ -132,9 +133,10 @@ def lambda_handler(event, context):
 
         print("-- good to go, posting!")
         title = unescape(post["title"])
-        post_toot(title, post["url"])
-        post_skeet(title, post["url"])
-        posted = True
+        all_posts = []
+        all_posts.append(post_toot(title, post["url"]))
+        all_posts.append(post_skeet(title, post["url"]))
+        posted = all(all_posts)
 
     if posted:
         return {"statusCode": 200, "body": "Posted successfully."}
@@ -158,51 +160,53 @@ def post_toot(title, link):
     print("-- attempting toot")
     post_me = f"{title} {link}"
 
-    try:
-        MASTO_CLIENT_KEY = os.getenv("MASTO_CLIENT_KEY")
-        MASTO_CLIENT_SECRET = os.getenv("MASTO_CLIENT_SECRET")
-        MASTO_ACCESS_TOKEN = os.getenv("MASTO_ACCESS_TOKEN")
+    for rest in range(3):
+        try:
+            MASTO_CLIENT_KEY = os.getenv("MASTO_CLIENT_KEY")
+            MASTO_CLIENT_SECRET = os.getenv("MASTO_CLIENT_SECRET")
+            MASTO_ACCESS_TOKEN = os.getenv("MASTO_ACCESS_TOKEN")
 
-        if MASTO_CLIENT_KEY and MASTO_CLIENT_SECRET and MASTO_ACCESS_TOKEN:
-            mastodon = Mastodon(
-                api_base_url="https://botsin.space",
-                client_id=MASTO_CLIENT_KEY,
-                client_secret=MASTO_CLIENT_SECRET,
-                access_token=MASTO_ACCESS_TOKEN,
-            )
-            mastodon.toot(post_me)
-            print(f"-- tooted {post_me}")
-            return True
-        else:
-            print("-- environment variables not present to toot")
-    except Exception as e:
-        print(f"-- toot caused exception {str(e)}")
-        return False
+            if MASTO_CLIENT_KEY and MASTO_CLIENT_SECRET and MASTO_ACCESS_TOKEN:
+                mastodon = Mastodon(
+                    api_base_url="https://botsin.space",
+                    client_id=MASTO_CLIENT_KEY,
+                    client_secret=MASTO_CLIENT_SECRET,
+                    access_token=MASTO_ACCESS_TOKEN,
+                )
+                mastodon.toot(post_me)
+                print(f"-- tooted {post_me}")
+                return True
+            else:
+                print("-- environment variables not present to toot")
+        except Exception as e:
+            print(f"-- toot caused exception {str(e)}")
+        sleep((rest * 2) + 1)
 
 
 def post_skeet(title, link):
     print("-- attempting skeet")
 
-    try:
-        BSKY_USERNAME = os.getenv("BSKY_USERNAME")
-        BSKY_PASSWORD = os.getenv("BSKY_PASSWORD")
+    for rest in range(3):
+        try:
+            BSKY_USERNAME = os.getenv("BSKY_USERNAME")
+            BSKY_PASSWORD = os.getenv("BSKY_PASSWORD")
 
-        if BSKY_USERNAME and BSKY_PASSWORD:
-            client = Client()
-            client.login(BSKY_USERNAME, BSKY_PASSWORD)
-            external_link = AppBskyEmbedExternal.External(
-                uri=link, description="", title=title
-            )
-            client.send_post(
-                text=title, embed=AppBskyEmbedExternal.Main(external=external_link)
-            )
-            print(f"-- skeeted {title}")
-            return True
-        else:
-            print("-- environment variables not present to skeet")
-    except Exception as e:
-        print(f"-- skeet caused exception {str(e)}")
-        return False
+            if BSKY_USERNAME and BSKY_PASSWORD:
+                client = Client()
+                client.login(BSKY_USERNAME, BSKY_PASSWORD)
+                external_link = AppBskyEmbedExternal.External(
+                    uri=link, description="", title=title
+                )
+                client.send_post(
+                    text=title, embed=AppBskyEmbedExternal.Main(external=external_link)
+                )
+                print(f"-- skeeted {title}")
+                return True
+            else:
+                print("-- environment variables not present to skeet")
+        except Exception as e:
+            print(f"-- skeet caused exception {str(e)}")
+        sleep((rest * 2) + 1)
 
 
 if __name__ == "__main__":
