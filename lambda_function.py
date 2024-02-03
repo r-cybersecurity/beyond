@@ -25,7 +25,7 @@ def lambda_handler(event, context):
         client_id=os.getenv("PRAW_CLIENT_ID"),
         client_secret=os.getenv("PRAW_CLIENT_SECRET"),
         refresh_token=os.getenv("PRAW_REFRESH_TOKEN"),
-        user_agent="r/cybersecurity beyond"
+        user_agent="r/cybersecurity beyond",
     )
     reddit.read_only = True
 
