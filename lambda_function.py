@@ -1,7 +1,6 @@
 import boto3
-import json
+import praw
 import os
-import requests
 import time
 from urllib.parse import urlparse
 from atproto import Client
@@ -22,37 +21,21 @@ else:  # otherwise, baseline at "bot must be SFW" by default
 
 
 def lambda_handler(event, context):
+    reddit = praw.Reddit(
+        client_id=os.getenv("PRAW_CLIENT_ID"),
+        client_secret=os.getenv("PRAW_CLIENT_SECRET"),
+        refresh_token=os.getenv("PRAW_REFRESH_TOKEN"),
+        user_agent="r/cybersecurity beyond"
+    )
+    reddit.read_only = True
+
     subreddit = os.getenv("SUBREDDIT")
-    url = f"https://www.reddit.com/r/{subreddit}/new/.json?count=25"
-    headers = {"User-Agent": "r/cybersecurity Beyond"}
-
-    try:
-        fetched_data = requests.get(url, headers=headers)
-    except Exception:
-        return {"statusCode": 500, "body": "Couldn't GET Reddit"}
-
-    try:
-        json_data = fetched_data.json()
-    except Exception:
-        print(fetched_data)
-        return {"statusCode": 500, "body": "Reddit did not return valid JSON"}
-
-    if "data" not in json_data:
-        print(fetched_data)
-        return {"statusCode": 500, "body": "JSON does not contain 'data' field."}
-
-    try:
-        posts_raw = json_data["data"]["children"]
-    except Exception as e:
-        return {"statusCode": 500, "body": f"JSON may be malformed due to {e}"}
-
     posts_clean = []
-    for post_raw in posts_raw:
-        post = post_raw["data"]
 
-        post_title = post["title"]
-        post_url = post["url"]
-        post_created_epoch = post["created"]
+    for submission in reddit.subreddit(subreddit).hot(limit=25):
+        post_title = submission.title
+        post_url = submission.url
+        post_created_epoch = submission.created_utc
         ddb_key = f"{subreddit}->{post_url}"
 
         if post_url.startswith("https://www.reddit.com"):
@@ -63,10 +46,12 @@ def lambda_handler(event, context):
             # is unmoderated, for ex. AutoMod may not run for 0-3m in typical use
             continue
 
-        post_ratio = post["upvote_ratio"]
-        post_score = post["score"]
+        post_ratio = submission.upvote_ratio
+        post_score = submission.score
+
         required_score = 1  # default required score
         required_ratio = 0.5  # default required ratio
+
         if os.getenv("POST_MINIMUM_SCORE"):
             required_score = int(os.getenv("POST_MINIMUM_SCORE"))
         if os.getenv("POST_MINIMUM_RATIO"):
