@@ -1,13 +1,18 @@
-# xpost-reddit-to-fediverse
+# Bring Link Aggregator Subreddits to the Fediverse
 
-An example bot (meant for deployment in Lambda) that cross-posts **direct links** from a given subreddit to up-and-coming federated platforms, helping to seed them with content (without simply linking back to Reddit).
+[![License](https://img.shields.io/github/license/t)](https://github.com/tweedge/xpost-reddit-to-fediverse)
+[![Code Style](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
+
+An example bot (meant for deployment in Lambda) that cross-posts **direct links** from a given subreddit to up-and-coming federated platforms, helping to seed them with content without simply linking back to Reddit.
 
 This posts *direct links only*, so for the example post:
 
 * "So, someone tried baiting people into downloading malware on r/cybersecurity (it didn't work) - a brief writeup" posted to r/cybersecurity at https://www.reddit.com/r/cybersecurity/comments/16wqej3/so_someone_tried_baiting_people_into_downloading/
 * The title of the post and *destination linked by the post* (https://chris.partridge.tech/2023/malware-targeting-cybersecurity-subreddit/) would be posted on federated social media
 
-Currently, this bot is used to cross-post links:
+### Used By
+
+I use this bot to cross-post my favorite link aggregator subreddits to the social media sites where I now spend my time:
 
 * From r/netsec
   * to Mastodon at [@netsec@botsin.space](https://botsin.space/@netsec)
@@ -27,6 +32,10 @@ However, the bot is not "smart" and does not have other features to limit unwant
 
 If you are 'hunting for an occasional gem' on a subreddit, just post links that interest you manually, don't use a bot!
 
-### Limitations
+### Considerations
 
-Because the bot is focused only on posting direct links, it will *only* work for subreddits which are primarily used as link aggregators.
+Because the bot only posts direct links and doesn't have readers go through Reddit as an interstitial/doesn't link to the comment section, it will *only* work for subreddits which are primarily used as **link aggregators.**
+
+The decisions made in this bot are generally good for people who may object to using Reddit directly but find value in the communities that have formed on Reddit, or are moving away from Reddit gradually, etc.
+
+I also wrote a bot oriented towards discussion-focused subreddits, the ["Best Of" r/cybersecurity bot](https://github.com/r-cybersecurity/best-of-bot), which summarizes posts and links to Reddit so people can read the full discussion including comments.
