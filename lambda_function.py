@@ -160,7 +160,7 @@ def post_toot(title, link):
                     client_secret=MASTO_CLIENT_SECRET,
                     access_token=MASTO_ACCESS_TOKEN,
                 )
-                mastodon.toot(post_me)
+                mastodon.status_post(post_me, visibility="unlisted")  # conservative
                 print(f"-- tooted {post_me}")
                 return True
             else:
