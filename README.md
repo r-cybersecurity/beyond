@@ -21,6 +21,8 @@ I use this bot to cross-post my favorite link aggregator subreddits to the socia
   * to Bluesky at [@r-blueteamsec.bsky.social](https://bsky.app/profile/r-blueteamsec.bsky.social)
 * From r/redteamsec
   * to Bluesky at [@r-redteamsec.bsky.social](https://bsky.app/profile/r-redteamsec.bsky.social)
+* From r/purpleteamsec
+  * to Bluesky at [@r-purpleteamsec.bsky.social](https://bsky.app/profile/r-purpleteamsec.bsky.social)
 
 ### Moderation
 
